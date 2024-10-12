@@ -79,7 +79,9 @@ const setState = (nextState: State): void => {
 };
 
 const getLocalState = async (): Promise<State> => {
-  return ((await browser.storage.local.get('state')).state as State) ?? State.OFF;
+  const { state } = await browser.storage.local.get('state');
+
+  return (state as State) ?? State.OFF;
 };
 
 browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
