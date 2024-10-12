@@ -1,6 +1,6 @@
 {
-  "manifest_version": 2,
-  "name": "Linkedin Full Width Browser Extension",
+  "manifest_version": 3,
+  "name": "LinkedIn Full Width Browser Extension",
   "version": "0.0.1",
 
   "icons": {
@@ -9,13 +9,17 @@
     "48": "assets/icons/favicon-48.png",
     "128": "assets/icons/favicon-128.png"
   },
-  "description": "Linkedin Full Width",
+  "description": "LinkedIn Full Width",
   "homepage_url": "https://github.com/xdemocle/linkedin-full-width-extension",
-  "short_name": "Linkedin Full Width",
+  "short_name": "LinkedIn Full Width",
 
-  "permissions": ["activeTab", "storage", "http://*/*", "https://*/*"],
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["https://www.linkedin.com/", "https://linkedin.com/"],
+  "optional_host_permissions": ["*://*/*"],
 
-  "content_security_policy": "script-src 'self'; object-src 'self'",
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src ws://localhost:9090; child-src 'self';"
+  },
 
   "__chrome|firefox__author": "xdemocle",
   "__opera__developer": {
@@ -31,29 +35,25 @@
   "__chrome__minimum_chrome_version": "49",
   "__opera__minimum_opera_version": "36",
 
-  "browser_action": {
-    "default_popup": "popup.html",
+  "action": {
     "default_icon": {
       "16": "assets/icons/favicon-16.png",
       "32": "assets/icons/favicon-32.png",
       "48": "assets/icons/favicon-48.png",
       "128": "assets/icons/favicon-128.png"
     },
-    "default_title": "tiny title",
-    "__chrome|opera__chrome_style": false,
-    "__firefox__browser_style": false
+    "default_title": "LinkedIn Full Width"
   },
 
   "__chrome|opera__options_page": "options.html",
   "options_ui": {
     "page": "options.html",
-    "open_in_tab": true,
-    "__chrome__chrome_style": false
+    "open_in_tab": true
   },
 
   "background": {
-    "scripts": ["js/background.bundle.js"],
-    "__chrome|opera__persistent": false
+    "service_worker": "js/background.bundle.js",
+    "type": "module"
   },
 
   "content_scripts": [

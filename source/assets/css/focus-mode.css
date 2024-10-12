@@ -1,0 +1,43 @@
+.global-nav__content {
+  width: 100% !important;
+  max-width: none !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+:root {
+  --scaffold-layout-xl-max-width: 100% !important;
+  --scaffold-layout-sidebar-width: minmax(0, 300px) !important;
+  --scaffold-layout-sidebar-narrow-width: minmax(0, 300px) !important;
+}
+
+.update-components-image__image {
+  width: 80%;
+  height: 100%;
+  margin: 0 auto;
+}
+
+.update-components-image__container {
+  padding-top: 103% !important;
+}
+
+.update-components-image__image-link .ivm-image-view-model,
+.update-components-image__image-link .ivm-view-attr__img-wrapper {
+  height: auto !important;
+}
+
+@media screen and (min-width: 1200px) {
+  .scaffold-layout-container.scaffold-layout-container--reflow {
+    max-width: none !important;
+  }
+}
+
+@media screen and (min-width: 992px) {
+  .scaffold-layout-container.scaffold-layout-container--reflow {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+  }
+  .scaffold-layout--reflow .scaffold-layout__content--list-detail-aside {
+    grid-template-columns: minmax(0, 20fr) minmax(300px, 4fr) !important;
+  }
+}
