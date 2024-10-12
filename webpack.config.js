@@ -24,9 +24,9 @@ const extensionReloaderPlugin =
         reloadPage: true, // Force the reload of the page also
         entries: {
           // TODO: reload manifest on update
-          contentScript: 'contentScript',
+          // contentScript: 'contentScript',
           background: 'background',
-          extensionPage: ['popup', 'options'],
+          extensionPage: ['options'],
         },
       })
     : () => {
@@ -60,8 +60,7 @@ module.exports = {
   entry: {
     manifest: path.join(sourcePath, 'manifest.json'),
     background: path.join(sourcePath, 'Background', 'index.ts'),
-    contentScript: path.join(sourcePath, 'ContentScript', 'index.ts'),
-    popup: path.join(sourcePath, 'Popup', 'index.tsx'),
+    // contentScript: path.join(sourcePath, 'ContentScript', 'index.ts'),
     options: path.join(sourcePath, 'Options', 'index.tsx'),
   },
 
@@ -73,9 +72,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.json'],
     alias: {
-      'webextension-polyfill-ts': path.resolve(
-        path.join(__dirname, 'node_modules', 'webextension-polyfill-ts'),
-      ),
+      'webextension-polyfill-ts': path.resolve(path.join(__dirname, 'node_modules', 'webextension-polyfill-ts')),
     },
   },
 
@@ -143,20 +140,10 @@ module.exports = {
     new CleanWebpackPlugin({
       cleanOnceBeforeBuildPatterns: [
         path.join(process.cwd(), `extension/${targetBrowser}`),
-        path.join(
-          process.cwd(),
-          `extension/${targetBrowser}.${getExtensionFileType(targetBrowser)}`,
-        ),
+        path.join(process.cwd(), `extension/${targetBrowser}.${getExtensionFileType(targetBrowser)}`),
       ],
       cleanStaleWebpackAssets: false,
       verbose: true,
-    }),
-    new HtmlWebpackPlugin({
-      template: path.join(viewsPath, 'popup.html'),
-      inject: 'body',
-      chunks: ['popup'],
-      hash: true,
-      filename: 'popup.html',
     }),
     new HtmlWebpackPlugin({
       template: path.join(viewsPath, 'options.html'),

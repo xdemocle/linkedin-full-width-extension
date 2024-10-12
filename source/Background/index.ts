@@ -1,66 +1,80 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as browser from 'webextension-polyfill';
-import { State } from '../types';
+
+export enum State {
+  XL = 'XL',
+  M = 'M',
+}
 
 const targetWebsite = 'linkedin.com';
-const width = '100';
+
 const css = `
-  .global-nav__content {
-      width: ${width}% !important;
-      max-width: none !important;
-      padding-left: 2rem !important;
-      padding-right: 2rem !important;
-  }
-
   :root {
-      --scaffold-layout-xl-max-width: ${width}% !important;
-      --scaffold-layout-sidebar-width: minmax(0, 300px) !important;
-      --scaffold-layout-sidebar-narrow-width: minmax(0, 300px) !important;
+    --scaffold-layout-xl-max-width: 100% !important;
+    --scaffold-layout-lg-max-width: 100% !important;
+    --scaffold-layout-md-max-width: 100% !important;
   }
 
-  .update-components-image__image {
-      width: 80%;
-      height: 100%;
-      margin: 0 auto;
+  .scaffold-layout-container {
+    max-width: unset !important;
   }
 
-  .update-components-image__container {
-    padding-top: 103% !important;
-  }
-
-
-  .update-components-image__image-link .ivm-image-view-model, .update-components-image__image-link .ivm-view-attr__img-wrapper {
-      height: auto !important;
+  .scaffold-layout-container.scaffold-layout-container--reflow {
+    width: 100% !important;
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
   }
 
   @media screen and (min-width: 1200px) {
-      .scaffold-layout-container.scaffold-layout-container--reflow {
-          max-width: none !important;
-      }
+    :root {
+      --scaffold-layout-sidebar-width: minmax(0, 300px) !important;
+      --scaffold-layout-sidebar-narrow-width: minmax(0, 300px) !important;
+    }
+
+    .global-nav__content {
+      width: 100% !important;
+      max-width: none !important;
+    }
+
+    .update-components-image__image {
+        width: 80%;
+        height: 100%;
+        margin: 0 auto;
+    }
+
+    .update-components-image__container {
+      padding-top: 103% !important;
+    }
+
+    .update-components-image__image-link .ivm-image-view-model, .update-components-image__image-link .ivm-view-attr__img-wrapper {
+        height: auto !important;
+    }
+
+    .scaffold-layout-container.scaffold-layout-container--reflow {
+      max-width: none !important;
+    }
   }
 
   @media screen and (min-width: 992px) {
-      .scaffold-layout-container.scaffold-layout-container--reflow {
-          
-      padding-left: 2rem !important;
-      padding-right: 2rem !important;
-      }
-      .scaffold-layout--reflow .scaffold-layout__content--list-detail-aside {
-          grid-template-columns: minmax(0, 20fr) minmax(300px, 4fr) !important;
-      }
+    
+    .scaffold-layout--reflow .scaffold-layout__content--list-detail-aside {
+      grid-template-columns: minmax(0, 20fr) minmax(300px, 4fr) !important;
+    }
   }
 `;
 
-const executeDefaultStyle = (nextState: State): void => {
-  if (nextState === State.ON) {
+const executeDefaultStyle = (nextState: 'M' | 'XL'): void => {
+  const styleId = 'linkedin-full-width-style';
+
+  if (nextState === 'XL') {
     const style = document.createElement('style');
 
-    style.id = 'linkedin-full-width-style';
+    style.id = styleId;
     style.innerHTML = css;
 
     document.head.appendChild(style);
-  } else if (nextState === State.OFF) {
-    const style = document.querySelector('#linkedin-full-width-style');
+  } else if (nextState === 'M') {
+    const style = document.querySelector(`#${styleId}`);
 
     if (style) {
       document.head.removeChild(style);
@@ -81,7 +95,7 @@ const setState = (nextState: State): void => {
 const getLocalState = async (): Promise<State> => {
   const { state } = await browser.storage.local.get('state');
 
-  return (state as State) ?? State.OFF;
+  return (state as State) ?? State.M;
 };
 
 browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -94,6 +108,7 @@ browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
       },
       func: executeDefaultStyle,
       args: [prevState],
+      world: 'MAIN',
     });
 
     setState(prevState);
@@ -108,15 +123,29 @@ browser.action.onClicked.addListener(async (tab) => {
     const prevState = await getLocalState();
 
     // Next state will always be the opposite
-    const nextState = prevState === State.ON ? State.OFF : State.ON;
+    const nextState = prevState === State.XL ? State.M : State.XL;
 
-    browser.scripting.executeScript({
-      target: {
-        tabId: tab.id ?? 0,
-      },
-      func: executeDefaultStyle,
-      args: [nextState],
-    });
+    // browser.scripting.executeScript({
+    //   target: {
+    //     tabId: tab.id ?? 0,
+    //   },
+    //   func: executeDefaultStyle,
+    //   args: [nextState],
+    //   world: 'MAIN',
+    // });
+
+    const tabs = await browser.tabs.query({ url: [`https://${targetWebsite}/*`, `https://www.${targetWebsite}/*`] });
+
+    for (const { id } of tabs) {
+      browser.scripting.executeScript({
+        target: {
+          tabId: id ?? 0,
+        },
+        func: executeDefaultStyle,
+        args: [nextState],
+        world: 'MAIN',
+      });
+    }
 
     setState(nextState);
   }
