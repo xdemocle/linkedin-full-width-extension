@@ -6,5 +6,8 @@
   "editor.wordWrapColumn": 120,
   "editor.codeActionsOnSave": {
     "source.organizeImports": "always"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
   }
 }

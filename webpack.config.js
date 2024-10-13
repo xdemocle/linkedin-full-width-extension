@@ -3,7 +3,7 @@ const webpack = require('webpack');
 const FilemanagerPlugin = require('filemanager-webpack-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+// const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ExtensionReloader = require('webpack-ext-reloader');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -11,7 +11,7 @@ const WextManifestWebpackPlugin = require('wext-manifest-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin');
 
-const viewsPath = path.join(__dirname, 'views');
+// const viewsPath = path.join(__dirname, 'views');
 const sourcePath = path.join(__dirname, 'source');
 const destPath = path.join(__dirname, 'extension');
 const nodeEnv = process.env.NODE_ENV || 'development';
@@ -26,7 +26,7 @@ const extensionReloaderPlugin =
           // TODO: reload manifest on update
           // contentScript: 'contentScript',
           background: 'background',
-          extensionPage: ['options'],
+          // extensionPage: ['options'],
         },
       })
     : () => {
@@ -61,7 +61,7 @@ module.exports = {
     manifest: path.join(sourcePath, 'manifest.json'),
     background: path.join(sourcePath, 'Background', 'index.ts'),
     // contentScript: path.join(sourcePath, 'ContentScript', 'index.ts'),
-    options: path.join(sourcePath, 'Options', 'index.tsx'),
+    // options: path.join(sourcePath, 'Options', 'index.tsx'),
   },
 
   output: {
@@ -145,13 +145,13 @@ module.exports = {
       cleanStaleWebpackAssets: false,
       verbose: true,
     }),
-    new HtmlWebpackPlugin({
-      template: path.join(viewsPath, 'options.html'),
-      inject: 'body',
-      chunks: ['options'],
-      hash: true,
-      filename: 'options.html',
-    }),
+    // new HtmlWebpackPlugin({
+    //   template: path.join(viewsPath, 'options.html'),
+    //   inject: 'body',
+    //   chunks: ['options'],
+    //   hash: true,
+    //   filename: 'options.html',
+    // }),
     // write css file(s) to build folder
     new MiniCssExtractPlugin({ filename: 'css/[name].css' }),
     // copy static assets

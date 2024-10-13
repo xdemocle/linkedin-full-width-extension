@@ -7,12 +7,23 @@ export enum State {
 }
 
 const targetWebsite = 'linkedin.com';
+const targetNewModules = ['mypreferences', 'manage'];
+const queryTabsUrl = [`https://${targetWebsite}/*`, `https://www.${targetWebsite}/*`];
 
 const css = `
   :root {
     --scaffold-layout-xl-max-width: 100% !important;
     --scaffold-layout-lg-max-width: 100% !important;
     --scaffold-layout-md-max-width: 100% !important;
+  }
+
+  #root header div {
+    max-width: unset !important;
+  }
+
+  #root header > div {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
   }
 
   .scaffold-layout-container {
@@ -23,6 +34,10 @@ const css = `
     width: 100% !important;
     padding-left: 2rem !important;
     padding-right: 2rem !important;
+  }
+
+  .scaffold-layout-container.scaffold-layout-container--reflow > div {
+    max-width: unset !important;
   }
 
   @media screen and (min-width: 1200px) {
@@ -36,16 +51,6 @@ const css = `
       max-width: none !important;
     }
 
-    .update-components-image__image {
-        width: 80%;
-        height: 100%;
-        margin: 0 auto;
-    }
-
-    .update-components-image__container {
-      padding-top: 103% !important;
-    }
-
     .update-components-image__image-link .ivm-image-view-model, .update-components-image__image-link .ivm-view-attr__img-wrapper {
         height: auto !important;
     }
@@ -54,22 +59,28 @@ const css = `
       max-width: none !important;
     }
   }
-
-  @media screen and (min-width: 992px) {
-    
-    .scaffold-layout--reflow .scaffold-layout__content--list-detail-aside {
-      grid-template-columns: minmax(0, 20fr) minmax(300px, 4fr) !important;
-    }
-  }
 `;
+
+const applyClassNamesToNewModules = (): void => {
+  const elementNewModule = document.querySelector('[tabindex="-1"]');
+
+  if (elementNewModule) {
+    elementNewModule.classList.add('scaffold-layout-container');
+    elementNewModule.classList.add('scaffold-layout-container--reflow');
+  }
+};
 
 const executeDefaultStyle = (nextState: 'M' | 'XL'): void => {
   const styleId = 'linkedin-full-width-style';
 
   if (nextState === 'XL') {
-    const style = document.createElement('style');
+    let style = document.querySelector(`#${styleId}`);
 
-    style.id = styleId;
+    if (!style) {
+      style = document.createElement('style');
+      style.id = styleId;
+    }
+
     style.innerHTML = css;
 
     document.head.appendChild(style);
@@ -98,6 +109,10 @@ const getLocalState = async (): Promise<State> => {
   return (state as State) ?? State.M;
 };
 
+browser.runtime.onInstalled.addListener(() => {
+  setState(State.M);
+});
+
 browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (tab.url?.includes(targetWebsite) && changeInfo.status === 'complete' && tab.active === true) {
     const prevState = await getLocalState();
@@ -115,26 +130,33 @@ browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   }
 });
 
+browser.webNavigation.onDOMContentLoaded.addListener(async () => {
+  const tabs = await browser.tabs.query({ url: queryTabsUrl });
+
+  for (const { id, url } of tabs) {
+    const isNotTargetNewModule = targetNewModules.filter((mod) => url?.search(`/${mod}`) !== -1).length === 0;
+
+    if (url?.includes(targetWebsite) && isNotTargetNewModule) {
+      browser.scripting.executeScript({
+        target: {
+          tabId: id!,
+        },
+        func: applyClassNamesToNewModules,
+        world: 'MAIN',
+      });
+    }
+  }
+});
+
 browser.action.onClicked.addListener(async (tab) => {
   if (tab.url?.includes(targetWebsite)) {
-    // console.log('onClicked', tab);
-
     // Retrieve the action badge to check if the extension is 'ON' or 'OFF'
     const prevState = await getLocalState();
 
     // Next state will always be the opposite
     const nextState = prevState === State.XL ? State.M : State.XL;
 
-    // browser.scripting.executeScript({
-    //   target: {
-    //     tabId: tab.id ?? 0,
-    //   },
-    //   func: executeDefaultStyle,
-    //   args: [nextState],
-    //   world: 'MAIN',
-    // });
-
-    const tabs = await browser.tabs.query({ url: [`https://${targetWebsite}/*`, `https://www.${targetWebsite}/*`] });
+    const tabs = await browser.tabs.query({ url: queryTabsUrl });
 
     for (const { id } of tabs) {
       browser.scripting.executeScript({
