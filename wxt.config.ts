@@ -14,9 +14,9 @@ export default defineConfig({
     description: 'Makes LinkedIn pages display in full width mode',
     permissions: ['activeTab', 'scripting', 'storage', 'webNavigation', 'management'],
     host_permissions: ['https://www.linkedin.com/*'],
+    // No default_popup property to ensure click handler works
     action: {
       default_title: 'LinkedIn Full Width',
-      // No default_popup property to ensure click handler works
     },
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",

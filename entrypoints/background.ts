@@ -142,7 +142,7 @@ export default defineBackground(() => {
               // Inject the content script
               await browser.scripting.executeScript({
                 target: { tabId: tab.id },
-                files: ['js/linkedin-full-width.bundle.js'],
+                files: ['content-scripts/content.js'],
               });
 
               console.log(`Successfully injected content script into tab ${tab.id} after re-enable`);
@@ -216,7 +216,7 @@ export default defineBackground(() => {
             // Inject the content script
             await browser.scripting.executeScript({
               target: { tabId: tab.id },
-              files: ['js/linkedin-full-width.bundle.js'],
+              files: ['content-scripts/content.js'],
             });
 
             console.log(`Successfully injected content script into tab ${tab.id}`);
