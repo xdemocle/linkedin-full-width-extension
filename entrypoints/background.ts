@@ -7,21 +7,19 @@
 
 import { type Browser } from 'wxt/browser';
 
+// LinkedIn domain and URL patterns for querying tabs
+export const targetWebsite = 'https://www.linkedin.com';
+
 // Define the two possible states for the extension
 export enum State {
-  XL = "XL", // Full width mode
-  M = "M", // Default LinkedIn width
+  XL = 'XL', // Full width mode
+  M = 'M', // Default LinkedIn width
 }
 
 export default defineBackground(() => {
-  console.log("Hello background!", { id: browser.runtime.id });
+  console.log('Hello background!', { id: browser.runtime.id });
 
-  // LinkedIn domain and URL patterns for querying tabs
-  const targetWebsite = "linkedin.com";
-  const queryTabsUrls = [
-    `https://${targetWebsite}/*`,
-    `https://www.${targetWebsite}/*`,
-  ];
+  const queryTabsUrls = [`${targetWebsite}/*`];
 
   // Set to track tabs with active content scripts
   const connectedTabs = new Set<number>();
@@ -46,7 +44,7 @@ export default defineBackground(() => {
    */
   const getLocalState = async (): Promise<State> => {
     // Get the state from local storage
-    const { state } = await browser.storage.local.get("state");
+    const { state } = await browser.storage.local.get('state');
 
     // Return the stored state or default to XL if not found
     return (state as State) ?? State.XL;
@@ -64,16 +62,10 @@ export default defineBackground(() => {
    * @param bypassCheck - Whether to bypass the connection check (default: false)
    * @returns Promise resolving to a boolean indicating success
    */
-  const sendToggleMessage = async (
-    tabId: number,
-    state: State,
-    bypassCheck = false
-  ): Promise<boolean> => {
+  const sendToggleMessage = async (tabId: number, state: State, bypassCheck = false): Promise<boolean> => {
     // Check if the tab has a connected content script (unless bypassed)
     if (!bypassCheck && !connectedTabs.has(tabId)) {
-      console.log(
-        `Tab ${tabId} does not have a connected content script, skipping message`
-      );
+      console.log(`Tab ${tabId} does not have a connected content script, skipping message`);
       return false;
     }
 
@@ -81,14 +73,13 @@ export default defineBackground(() => {
       // Send the message to the content script
       console.log(`Sending toggle message to tab ${tabId} with state ${state}`);
 
-      await browser.tabs.sendMessage(tabId, { action: "toggleStyles", state });
+      await browser.tabs.sendMessage(tabId, { action: 'toggleStyles', state });
 
       console.log(`Successfully sent message to tab ${tabId}`);
       return true;
     } catch (error) {
       // Handle errors (typically when content script isn't loaded yet)
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
 
       console.error(`Error sending message to tab ${tabId}: ${errorMessage}`);
 
@@ -105,8 +96,8 @@ export default defineBackground(() => {
    *
    * This allows us to track which tabs have active content scripts.
    */
-  browser.runtime.onConnect.addListener((port) => {
-    if (port.name === "content-script-connection") {
+  browser.runtime.onConnect.addListener((port: Browser.runtime.Port) => {
+    if (port.name === 'content-script-connection') {
       // Get the tab ID from the sender
       const tabId = port.sender?.tab?.id;
 
@@ -130,10 +121,10 @@ export default defineBackground(() => {
    * This handles the case when the extension is disabled and then re-enabled.
    * We need to reinject content scripts into existing tabs.
    */
-  browser.management.onEnabled.addListener(async (info) => {
+  browser.management.onEnabled.addListener(async (info: Browser.management.ExtensionInfo) => {
     // Check if it's our extension that was enabled
     if (info.id === browser.runtime.id) {
-      console.log("Extension was re-enabled, reinjecting content scripts");
+      console.log('Extension was re-enabled, reinjecting content scripts');
 
       // Get the current state
       const currentState = await getLocalState();
@@ -142,9 +133,7 @@ export default defineBackground(() => {
         // Find all LinkedIn tabs
         const tabs = await browser.tabs.query({ url: queryTabsUrls });
 
-        console.log(
-          `Found ${tabs.length} LinkedIn tabs that need content script injection after re-enable`
-        );
+        console.log(`Found ${tabs.length} LinkedIn tabs that need content script injection after re-enable`);
 
         // Inject content script into each tab
         for (const tab of tabs) {
@@ -153,12 +142,10 @@ export default defineBackground(() => {
               // Inject the content script
               await browser.scripting.executeScript({
                 target: { tabId: tab.id },
-                files: ["js/linkedin-full-width.bundle.js"],
+                files: ['js/linkedin-full-width.bundle.js'],
               });
 
-              console.log(
-                `Successfully injected content script into tab ${tab.id} after re-enable`
-              );
+              console.log(`Successfully injected content script into tab ${tab.id} after re-enable`);
 
               // Apply the current state with a delay
               setTimeout(async () => {
@@ -166,17 +153,13 @@ export default defineBackground(() => {
                 await sendToggleMessage(tab.id!, currentState, true);
               }, 250);
             } catch (error) {
-              const errorMessage =
-                error instanceof Error ? error.message : String(error);
-              console.error(
-                `Error injecting content script into tab ${tab.id} after re-enable: ${errorMessage}`
-              );
+              const errorMessage = error instanceof Error ? error.message : String(error);
+              console.error(`Error injecting content script into tab ${tab.id} after re-enable: ${errorMessage}`);
             }
           }
         }
       } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`Error handling extension re-enable: ${errorMessage}`);
       }
     }
@@ -187,30 +170,23 @@ export default defineBackground(() => {
    *
    * This handles the contentScriptReady message to register tabs.
    */
-  browser.runtime.onMessage.addListener(
-    async (message: unknown, sender: Browser.runtime.MessageSender) => {
-      if (
-        message &&
-        typeof message === "object" &&
-        "action" in message &&
-        message.action === "contentScriptReady"
-      ) {
-        const tabId = sender.tab?.id;
+  browser.runtime.onMessage.addListener(async (message: unknown, sender: Browser.runtime.MessageSender) => {
+    if (message && typeof message === 'object' && 'action' in message && message.action === 'contentScriptReady') {
+      const tabId = sender.tab?.id;
 
-        if (tabId) {
-          console.log(`Content script ready in tab ${tabId}`);
-          connectedTabs.add(tabId);
+      if (tabId) {
+        console.log(`Content script ready in tab ${tabId}`);
+        connectedTabs.add(tabId);
 
-          const state = await getLocalState();
+        const state = await getLocalState();
 
-          // Send the current state to the newly ready content script
-          await sendToggleMessage(tabId, state);
-        }
+        // Send the current state to the newly ready content script
+        await sendToggleMessage(tabId, state);
       }
-
-      return false; // Don't need to send a response
     }
-  );
+
+    return false; // Don't need to send a response
+  });
 
   /**
    * Initializes the extension when it's first installed or updated
@@ -218,24 +194,20 @@ export default defineBackground(() => {
    * Sets the default state to XL (full width) and handles content script injection
    * for existing tabs when the extension is updated.
    */
-  browser.runtime.onInstalled.addListener(async (details) => {
+  browser.runtime.onInstalled.addListener(async (details: Browser.runtime.InstalledDetails) => {
     console.log(`LinkedIn Full Width Extension ${details.reason}`);
 
     const currentState = await getLocalState();
 
     setState(currentState);
 
-    console.log(
-      "Extension installed/updated, injecting content scripts into existing tabs"
-    );
+    console.log('Extension installed/updated, injecting content scripts into existing tabs');
 
     try {
       // Find all LinkedIn tabs
       const tabs = await browser.tabs.query({ url: queryTabsUrls });
 
-      console.log(
-        `Found ${tabs.length} LinkedIn tabs that need content script injection`
-      );
+      console.log(`Found ${tabs.length} LinkedIn tabs that need content script injection`);
 
       // Inject content script into each tab
       for (const tab of tabs) {
@@ -244,12 +216,10 @@ export default defineBackground(() => {
             // Inject the content script
             await browser.scripting.executeScript({
               target: { tabId: tab.id },
-              files: ["js/linkedin-full-width.bundle.js"],
+              files: ['js/linkedin-full-width.bundle.js'],
             });
 
-            console.log(
-              `Successfully injected content script into tab ${tab.id}`
-            );
+            console.log(`Successfully injected content script into tab ${tab.id}`);
 
             setTimeout(async () => {
               // Apply the current state to the newly loaded tab
@@ -257,17 +227,13 @@ export default defineBackground(() => {
               await sendToggleMessage(tab.id!, currentState, true);
             }, 250);
           } catch (error) {
-            const errorMessage =
-              error instanceof Error ? error.message : String(error);
-            console.error(
-              `Error injecting content script into tab ${tab.id}: ${errorMessage}`
-            );
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            console.error(`Error injecting content script into tab ${tab.id}: ${errorMessage}`);
           }
         }
       }
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(`Error handling extension update: ${errorMessage}`);
     }
   });
@@ -278,9 +244,9 @@ export default defineBackground(() => {
    * This listener waits for LinkedIn tabs to finish loading, then applies
    * the current extension state to ensure consistent styling across all tabs.
    */
-  browser.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+  browser.tabs.onUpdated.addListener(async (tabId: number, changeInfo: { status?: string }, tab: Browser.tabs.Tab) => {
     // Only process LinkedIn tabs that have finished loading
-    if (tab.url?.includes(targetWebsite) && changeInfo.status === "complete") {
+    if (tab.url?.includes(targetWebsite) && changeInfo.status === 'complete') {
       console.log(`LinkedIn tab updated: ${tab.url}`);
 
       // Get the current extension state
@@ -305,7 +271,7 @@ export default defineBackground(() => {
    * It immediately updates the badge and then attempts to update all open LinkedIn tabs.
    */
   browser.action.onClicked.addListener(async () => {
-    console.log("Extension icon clicked");
+    console.log('Extension icon clicked');
 
     // Toggle between XL and M states
     const prevState = await getLocalState();
@@ -330,7 +296,7 @@ export default defineBackground(() => {
       // Wait for all tabs to be updated
       await Promise.all(updatePromises);
 
-      console.log("Finished updating all tabs");
+      console.log('Finished updating all tabs');
     }
   });
 });

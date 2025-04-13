@@ -9,7 +9,6 @@ export default defineConfig({
     },
   },
   manifest: {
-    manifest_version: 3,
     name: 'LinkedIn Full Width',
     description: 'Makes LinkedIn pages display in full width mode',
     permissions: ['activeTab', 'scripting', 'storage', 'webNavigation', 'management'],
@@ -18,12 +17,6 @@ export default defineConfig({
       default_title: 'LinkedIn Full Width',
       // No default_popup property to ensure click handler works
     },
-    // web_accessible_resources: [
-    //   {
-    //     matches: ['<all_urls>'],
-    //     resources: ['/icon/*.png', '/content-scripts/*.js'],
-    //   },
-    // ],
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
     },

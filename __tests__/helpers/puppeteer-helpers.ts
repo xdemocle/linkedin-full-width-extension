@@ -1,3 +1,4 @@
+// @ts-ignore - Puppeteer types will be installed when needed
 import * as puppeteer from 'puppeteer';
 import * as path from 'path';
 
@@ -9,7 +10,7 @@ import * as path from 'path';
  */
 export async function getExtensionId(browser: puppeteer.Browser): Promise<string> {
   const targets = await browser.targets();
-  const extensionTarget = targets.find(target => 
+  const extensionTarget = targets.find((target: any) => 
     target.type() === 'background_page' && target.url().includes('linkedin-full-width')
   );
   
@@ -70,7 +71,7 @@ export async function clickExtensionButton(browser: puppeteer.Browser, extension
 export async function getBackgroundPage(browser: puppeteer.Browser, extensionId: string): Promise<puppeteer.Page> {
   const targets = await browser.targets();
   const backgroundPageTarget = targets.find(
-    target => target.type() === 'background_page' && target.url().includes(extensionId)
+    (target: any) => target.type() === 'background_page' && target.url().includes(extensionId)
   );
   
   if (!backgroundPageTarget) {
