@@ -1,0 +1,37 @@
+{
+  "name": "linkedin-full-width-extension",
+  "version": "1.1.0",
+  "description": "LinkedIn Full Width",
+  "repository": "https://github.com/xdemocle/linkedin-full-width-extension.git",
+  "author": {
+    "name": "xdemocle",
+    "email": "xdemocle@gmail.com",
+    "url": "https://rocco.me"
+  },
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "dev": "wxt",
+    "dev:firefox": "wxt -b firefox",
+    "dev:chrome": "wxt -b chrome",
+    "dev:opera": "wxt -b opera",
+    "build": "wxt build",
+    "build:firefox": "wxt build -b firefox",
+    "build:chrome": "wxt build -b chrome",
+    "build:opera": "wxt build -b opera",
+    "zip": "wxt zip",
+    "zip:firefox": "wxt zip -b firefox",
+    "zip:chrome": "wxt zip -b chrome",
+    "zip:opera": "wxt zip -b opera",
+    "compile": "tsc --noEmit",
+    "postinstall": "wxt prepare"
+  },
+  "devDependencies": {
+    "@wxt-dev/webextension-polyfill": "^1.0.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "webextension-polyfill": "^0.12.0",
+    "wxt": "^0.20.0"
+  },
+  "packageManager": "pnpm@10.8.0+sha512.0e82714d1b5b43c74610193cb20734897c1d00de89d0e18420aebc5977fa13d780a9cb05734624e81ebd81cc876cd464794850641c48b9544326b5622ca29971"
+}

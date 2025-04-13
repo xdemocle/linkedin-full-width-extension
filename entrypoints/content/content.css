@@ -1,0 +1,91 @@
+/* Root variables - Override LinkedIn's default max-width constraints */
+:root {
+  --scaffold-layout-xl-max-width: 100% !important;
+  --scaffold-layout-lg-max-width: 100% !important;
+  --scaffold-layout-md-max-width: 100% !important;
+  --scaffold-layout-sidebar-narrow-width: minmax(0,300px) !important;
+}
+
+/* Global navigation - Ensure the nav bar spans the full width */
+.global-nav__content {
+  width: 100%;
+}
+
+/* Header styles - Remove max-width constraints and add padding */
+#root header div {
+  max-width: unset !important;
+}
+
+#root header > div {
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+/* Layout container styles - Remove width constraints and add consistent padding */
+.scaffold-layout-container {
+  max-width: unset !important;
+}
+
+.scaffold-layout-container.scaffold-layout-container--reflow {
+  width: 100% !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+.scaffold-layout-container.scaffold-layout-container--reflow > div {
+  max-width: unset !important;
+  width: 100% !important;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Main feed width - Allow the main content area to expand */
+.scaffold-layout__main {
+  max-width: none !important;
+  padding: 0 !important;
+}
+
+/* Content containers - Allow post content to use more space */
+.feed-shared-update-v2__content, 
+.scaffold-finite-scroll__content > div {
+  max-width: none !important;
+}
+
+/* Profile page - Expand profile sections to use available space */
+.pv-profile-section, 
+.artdeco-card {
+  max-width: none !important;
+}
+
+/* Search results - Allow search results to use full width */
+.search-results-container {
+  max-width: none !important;
+}
+
+/* Company/profile header images - Set consistent height */
+.top-card-background-hero-image {
+  min-height: 160px !important;
+  max-height: 160px !important;
+}
+
+.org-top-card__hero-image {
+  height: 160px !important;
+}
+
+/* Network growth page - Expand and add consistent padding */
+#root > div > div > main > div {
+  max-width: none !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
+}
+
+/* Jobs page - Fix layout for the jobs section */
+.workflow__left-rail {
+  padding-left: 12px !important;
+}
+
+/* Grid containers - Ensure all grid layouts use full width */
+.grid {
+  max-width: none !important;
+  width: 100% !important;
+}

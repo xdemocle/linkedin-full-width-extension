@@ -1,0 +1,48 @@
+# Main specs
+
+- We building a cross browser extension for chrome, opera and firefox
+- We are using @wxt-dev framework (https://wxt.dev/)
+- We are using manifest v3
+- We DON'T use categorically code for manifest v2
+- We are using typescript
+- We are using webpack
+- Before removing eslint-disable manually added, always ask me for confirmation;
+- Before removing any code I manually added, always ask me for confirmation;
+- We don't use any frameworks but vanilla typescript.
+
+## General workflow
+
+- Always ask questions about the feature or fix before you do anything. When you get the answer, first check if there is any ambiguity or poorly thought-out areas, and make sure I work all of those out. If I say "No more questions", you will stop the clarification and move on to coding.
+- Use TDD to develop the app. Before proceeding, first list all the test cases that you will write.
+- As you generate the code, notify me each time you start implementing a new test case. There is no need to pause for acknowledgement.
+- Every time you complete one test case, check if you need more, and notify me of new test cases.
+- After coding, check whether there are deprecated features and update the usages as needed.
+- After you're done with a feature, you will re-run the entire test suite again to verify that everything is working across the app.
+- After you're done with a feature, give me an overview of what you've implemented and a list of things I might want to test manually.
+
+## Fixing bugs / addressing issues
+
+- When I report an issue, if the description or steps to reproduce or the circumstances seem unclear, ask for clarification before proceeding. Gather as much information as you can before formulating a hypothesis.
+- When fixing issues, outline what the proposed fix is, with the hypotheses on why it will work. Point me to any files that you intend to change, and how you intend to change them. Highlight snippets of relevant code in the chat if possible. Wait for my confirmation before proceeding.
+- Always write a test for the correct behavior before you fix the issue.
+
+## UI structure
+
+- Every bit of UI must have a text label. This applies to buttons with only icons, and similar features. (Features that are strictly visual, like charts, are an exception.)
+
+## Code structure and design
+
+- Prefer simple solutions with less moving parts over complex solutions.
+- Prefer to keep code cohesive over overly abstract.
+- Always come up with 2, ideally 3 possible solutions, and contrast them for performance, UX, and long-term maintainability.
+- Always discuss your solutions with me before proceeding.
+- Always wait for confirmation on the chosen approach.
+- Always err on the side of less components when faced with a choice. Extract later once the use cases and dependencies are well-defined.
+- Always err on the side of slightly duplicating the code until use cases are well-defined.
+- Err on the side of deep and generic abstractions over overly configurable shallow ones.
+- Prefer large files with extensive inline comments over many small ones.
+- Prefer flat organization over deep one.
+
+## 3rd party dependencies
+
+- When choosing 3rd party libraries to depend on, first select up to 3 alternatives, and compare them. Pick the one that you consider is best-documented and most widely used. Confirm the choice with me before proceeding.
