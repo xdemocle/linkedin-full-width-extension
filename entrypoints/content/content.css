@@ -3,7 +3,7 @@
   --scaffold-layout-xl-max-width: 100% !important;
   --scaffold-layout-lg-max-width: 100% !important;
   --scaffold-layout-md-max-width: 100% !important;
-  --scaffold-layout-sidebar-narrow-width: minmax(0,300px) !important;
+  --scaffold-layout-sidebar-narrow-width: minmax(0, 300px) !important;
 }
 
 /* Global navigation - Ensure the nav bar spans the full width */
@@ -46,13 +46,13 @@
 }
 
 /* Content containers - Allow post content to use more space */
-.feed-shared-update-v2__content, 
+.feed-shared-update-v2__content,
 .scaffold-finite-scroll__content > div {
   max-width: none !important;
 }
 
 /* Profile page - Expand profile sections to use available space */
-.pv-profile-section, 
+.pv-profile-section,
 .artdeco-card {
   max-width: none !important;
 }
@@ -60,16 +60,6 @@
 /* Search results - Allow search results to use full width */
 .search-results-container {
   max-width: none !important;
-}
-
-/* Company/profile header images - Set consistent height */
-.top-card-background-hero-image {
-  min-height: 160px !important;
-  max-height: 160px !important;
-}
-
-.org-top-card__hero-image {
-  height: 160px !important;
 }
 
 /* Network growth page - Expand and add consistent padding */
