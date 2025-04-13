@@ -30,6 +30,7 @@
   },
   "devDependencies": {
     "@types/jest": "^29.5.14",
+    "@wxt-dev/auto-icons": "^1.0.2",
     "@wxt-dev/webextension-polyfill": "^1.0.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",

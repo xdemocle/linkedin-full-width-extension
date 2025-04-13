@@ -2,3 +2,4 @@ onlyBuiltDependencies:
   - dtrace-provider
   - esbuild
   - spawn-sync
+  - sharp
