@@ -9,6 +9,7 @@
 - Before removing eslint-disable manually added, always ask me for confirmation;
 - Before removing any code I manually added, always ask me for confirmation;
 - We don't use any frameworks but vanilla typescript.
+- never modify code in gitignore list.
 
 ## General workflow
 
