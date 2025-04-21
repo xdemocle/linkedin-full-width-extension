@@ -3,20 +3,16 @@
  *
  * This script handles the application of styles to LinkedIn pages based on the extension state.
  * It injects CSS directly into the page to toggle between default and full-width layouts.
+ * 
+ * It also injects a script into the page context for more reliable communication with the background script.
  */
-import { targetWebsite } from '../background';
+import { targetWebsitePattern, State } from '../../web-extension-config';
 import linkedinFullWidthStyles from './content.css?inline';
 
 // WXT provides CSS as a module, so we need to convert it to a string
 
-// Define the two possible states for the extension, matching the background script
-export enum State {
-  XL = 'XL', // Full width mode
-  M = 'M', // Default LinkedIn width
-}
-
 export default defineContentScript({
-  matches: [`${targetWebsite}/*`],
+  matches: [targetWebsitePattern],
   main() {
     /**
      * Applies necessary CSS classes to new LinkedIn modules
@@ -40,11 +36,12 @@ export default defineContentScript({
      *
      * This function injects or removes a style element in the document head
      * with CSS that controls the width of LinkedIn's layout components.
+     * It also communicates with the injected script for more reliable state management.
      *
      * @param state - The state to apply (XL for full width, M for default width)
      */
     const toggleStyles = (state: State): void => {
-      console.log(`Toggling styles to state: ${state}`);
+      console.debug(`Toggling styles to state: ${state}`);
 
       const styleId = 'linkedin-full-width-style';
 
@@ -61,7 +58,7 @@ export default defineContentScript({
         // Create a new style element for full-width mode
         const style = document.createElement('style');
         style.id = styleId;
-        console.log('Applying full-width styles (XL state)');
+        console.debug('Applying full-width styles (XL state)');
 
         // Use the imported CSS from the external file
         style.textContent = linkedinFullWidthStyles.toString();
@@ -71,9 +68,16 @@ export default defineContentScript({
       } else {
         // For M state, we've already removed the custom styles
         // This allows LinkedIn's default styles to take effect
-        console.log('Applying default LinkedIn layout (M state)');
+        console.debug('Applying default LinkedIn layout (M state)');
         // No need to add any styles - LinkedIn defaults will apply
       }
+      
+      // Notify the injected script about the style change
+      window.postMessage({
+        source: 'linkedin-full-width-content',
+        action: 'toggleStyles',
+        state: state
+      }, '*');
     };
 
     /**
@@ -103,14 +107,14 @@ export default defineContentScript({
         // Get the current state from browser storage
         const { state } = await browser.storage.local.get('state');
 
-        console.log('Retrieved state from storage:', state);
+        console.debug('Retrieved state from storage:', state);
 
         if (state) {
           // Apply the stored state
           toggleStyles(state as State);
         } else {
           // Default to XL (full width) if no state is found
-          console.log('No state found in storage, defaulting to XL mode');
+          console.debug('No state found in storage, defaulting to XL mode');
 
           toggleStyles(State.XL);
         }
@@ -129,11 +133,11 @@ export default defineContentScript({
      * It includes robust error handling and type checking for message safety.
      */
     browser.runtime.onMessage.addListener((message: unknown) => {
-      console.log('Content script received message:', message);
+      console.debug('Content script received message:', message);
 
       // First, ensure message is a valid object
       if (typeof message !== 'object' || message === null) {
-        console.log('Invalid message format received');
+        console.error('Invalid message format received');
 
         return Promise.resolve({
           success: false,
@@ -150,13 +154,13 @@ export default defineContentScript({
       ) {
         // Ensure state is valid
         const state = message.state === State.XL ? State.XL : State.M;
-        console.log(`Applying state from message: ${state}`);
+        console.debug(`Applying state from message: ${state}`);
 
         try {
           // Apply the requested styles
           toggleStyles(state);
 
-          console.log(`Successfully applied styles for state: ${state}`);
+          console.debug(`Successfully applied styles for state: ${state}`);
 
           return Promise.resolve({ success: true });
         } catch (error) {
@@ -170,7 +174,7 @@ export default defineContentScript({
       }
 
       // Handle any unrecognized message types
-      console.log('Unhandled message type received');
+      console.warn('Unhandled message type received');
 
       return Promise.resolve({
         success: false,
@@ -178,15 +182,79 @@ export default defineContentScript({
       });
     });
 
-    // Establish a connection with the background script
-    const port = browser.runtime.connect({ name: 'content-script-connection' });
-
+    // Inject our script into the page context for reliable communication
+    const injectScript = document.createElement('script');
+    // Use the browser API to get the URL of the inject-script.js file from the public directory
+    // This ensures it works with the web_accessible_resources configuration
+    injectScript.src = (browser as any).runtime.getURL('/inject-script.js');
+    injectScript.onload = () => {
+      console.debug('Injected script loaded successfully');
+    };
+    (document.head || document.documentElement).appendChild(injectScript);
+    
+    // Listen for messages from the injected script
+    window.addEventListener('message', (event) => {
+      // Validate the origin - only accept messages from the same window
+      if (event.source !== window) {
+        return;
+      }
+      
+      const message = event.data;
+      
+      // Check if this is a message from our injected script
+      if (message && message.source === 'linkedin-full-width-injected') {
+        console.debug('Content script received message from injected script:', message);
+        
+        // Handle different message types
+        if (message.action === 'injectedScriptReady') {
+          console.debug('Injected script is ready');
+          // Now that the injected script is ready, we can establish connection with background
+          establishBackgroundConnection();
+        } else if (message.action === 'heartbeat') {
+          // Received heartbeat from injected script, relay to background
+          browser.runtime.sendMessage({
+            action: 'heartbeat',
+            timestamp: message.timestamp
+          }).catch(error => {
+            console.error('Error sending heartbeat to background:', error);
+            // Try to re-establish connection
+            establishBackgroundConnection();
+          });
+        }
+      }
+    });
+    
+    // Function to establish connection with background script
+    const establishBackgroundConnection = () => {
+      try {
+        // Make sure browser is defined and has runtime
+        if (typeof browser !== 'undefined' && browser.runtime) {
+          // Establish a connection with the background script
+          const port = browser.runtime.connect({ name: 'content-script-connection' });
+          
+          // Handle disconnection
+          port.onDisconnect.addListener(() => {
+            console.warn('Connection to background script lost, attempting to reconnect...');
+            // Wait a bit before trying to reconnect
+            setTimeout(establishBackgroundConnection, 1000);
+          });
+          
+          // Notify background script that content script is ready
+          browser.runtime.sendMessage({ action: 'contentScriptReady' }).catch((error) => {
+            console.error('Error notifying background script of readiness:', error);
+          });
+        } else {
+          console.warn('Browser runtime not available, retrying in 1 second...');
+          setTimeout(establishBackgroundConnection, 1000);
+        }
+      } catch (error) {
+        console.error('Error establishing connection with background script:', error);
+        // Try again after a delay
+        setTimeout(establishBackgroundConnection, 1000);
+      }
+    };
+    
     // Run the initialization
     initialize();
-
-    // Notify background script that content script is ready
-    browser.runtime.sendMessage({ action: 'contentScriptReady' }).catch((error) => {
-      console.error('Error notifying background script of readiness:', error);
-    });
   },
 });

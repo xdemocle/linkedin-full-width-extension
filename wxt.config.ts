@@ -1,4 +1,5 @@
 import { defineConfig } from 'wxt';
+import { targetWebsite, extensionName, extensionDescription } from './web-extension-config';
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -10,14 +11,20 @@ export default defineConfig({
     },
   },
   manifest: {
-    name: 'LinkedIn Full Width',
-    description: 'Makes LinkedIn pages display in full width mode',
+    name: extensionName,
+    description: extensionDescription,
     permissions: ['activeTab', 'scripting', 'storage', 'webNavigation', 'management'],
-    host_permissions: ['https://www.linkedin.com/*'],
-    // No default_popup property to ensure click handler works
+    host_permissions: [`${targetWebsite}/*`],
     action: {
-      default_title: 'LinkedIn Full Width',
+      default_title: extensionName,
+      // No default_popup property to ensure click handler works
     },
+    web_accessible_resources: [
+      {
+        resources: ['/inject-script.js'],
+        matches: [`${targetWebsite}/*`]
+      }
+    ],
     content_security_policy: {
       extension_pages: "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';",
     },

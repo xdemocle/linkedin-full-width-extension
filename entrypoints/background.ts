@@ -6,15 +6,7 @@
  */
 
 import { type Browser } from 'wxt/browser';
-
-// LinkedIn domain and URL patterns for querying tabs
-export const targetWebsite = 'https://www.linkedin.com';
-
-// Define the two possible states for the extension
-export enum State {
-  XL = 'XL', // Full width mode
-  M = 'M', // Default LinkedIn width
-}
+import { targetWebsite, State } from '../web-extension-config';
 
 export default defineBackground(() => {
   console.log('Hello background!', { id: browser.runtime.id });
@@ -23,6 +15,33 @@ export default defineBackground(() => {
 
   // Set to track tabs with active content scripts
   const connectedTabs = new Set<number>();
+
+  // Track last heartbeat from each tab
+  const tabHeartbeats = new Map<number, number>();
+
+  // Heartbeat check interval (in milliseconds)
+  const HEARTBEAT_CHECK_INTERVAL = 60000; // 1 minute
+
+  /**
+   * Injects the content script into a tab
+   * 
+   * @param tabId - The ID of the tab to inject the content script into
+   * @returns Promise that resolves when the content script is injected
+   */
+  const injectContentScript = async (tabId: number): Promise<void> => {
+    console.log(`Injecting content script into tab ${tabId}`);
+    try {
+      await browser.scripting.executeScript({
+        target: { tabId },
+        files: ['content-scripts/content.js'],
+      });
+      console.log(`Successfully injected content script into tab ${tabId}`);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(`Error injecting content script into tab ${tabId}: ${errorMessage}`);
+      throw error; // Re-throw to allow caller to handle
+    }
+  };
 
   /**
    * Sets the extension state and updates the browser action badge
@@ -59,13 +78,30 @@ export default defineBackground(() => {
    *
    * @param tabId - The ID of the tab to send the message to
    * @param state - The state to apply (XL or M)
-   * @param bypassCheck - Whether to bypass the connection check (default: false)
+   * @param bypassCheck - Whether to bypass the connected tab check
    * @returns Promise resolving to a boolean indicating success
    */
   const sendToggleMessage = async (tabId: number, state: State, bypassCheck = false): Promise<boolean> => {
     // Check if the tab has a connected content script (unless bypassed)
     if (!bypassCheck && !connectedTabs.has(tabId)) {
       console.log(`Tab ${tabId} does not have a connected content script, skipping message`);
+      
+      // Try to inject the content script if the tab exists but doesn't have a connected content script
+      try {
+        const tabs = await browser.tabs.query({ active: true });
+        const tab = tabs.find(t => t.id === tabId);
+        if (tab && tab.url?.includes(targetWebsite)) {
+          console.log(`Attempting to inject content script into tab ${tabId}`);
+          await injectContentScript(tabId);
+          // Wait a bit for the content script to initialize
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Try sending the message again, bypassing the check
+          return sendToggleMessage(tabId, state, true);
+        }
+      } catch (injectError) {
+        console.error(`Error checking or injecting content script into tab ${tabId}:`, injectError);
+      }
+      
       return false;
     }
 
@@ -83,9 +119,24 @@ export default defineBackground(() => {
 
       console.error(`Error sending message to tab ${tabId}: ${errorMessage}`);
 
+      // Check if this is a 'Receiving end does not exist' error
+      if (errorMessage.includes('Receiving end does not exist')) {
+        console.log(`Content script not ready in tab ${tabId}, attempting to inject it`);
+        try {
+          await injectContentScript(tabId);
+          // Wait a bit for the content script to initialize
+          await new Promise(resolve => setTimeout(resolve, 500));
+          // Try sending the message again
+          return sendToggleMessage(tabId, state, true);
+        } catch (injectError) {
+          console.error(`Failed to inject content script into tab ${tabId}:`, injectError);
+        }
+      }
+
       // If we get an error, the content script might have been unloaded
       // Remove it from our connected tabs set
       connectedTabs.delete(tabId);
+      tabHeartbeats.delete(tabId);
 
       return false;
     }
@@ -114,6 +165,68 @@ export default defineBackground(() => {
       }
     }
   });
+
+  /**
+   * Listens for messages from content scripts
+   *
+   * This handles the contentScriptReady message to register tabs
+   * and heartbeat messages to track active tabs.
+   */
+  browser.runtime.onMessage.addListener((message: unknown, sender: Browser.runtime.MessageSender) => {
+    // Ensure sender has a valid tab ID
+    if (!sender.tab?.id) {
+      return;
+    }
+
+    const tabId = sender.tab.id;
+
+    // Handle contentScriptReady message
+    if (
+      typeof message === 'object' &&
+      message !== null &&
+      'action' in message
+    ) {
+      if (message.action === 'contentScriptReady') {
+        console.log(`Content script ready in tab ${tabId}`);
+
+        // Add to our set of connected tabs
+        connectedTabs.add(tabId);
+        
+        // Record heartbeat time
+        tabHeartbeats.set(tabId, Date.now());
+
+        // Apply the current state to the newly ready tab
+        getLocalState().then((currentState) => {
+          sendToggleMessage(tabId, currentState);
+        });
+      } else if (message.action === 'heartbeat' && 'timestamp' in message) {
+        // Update the heartbeat timestamp for this tab
+        console.log(`Received heartbeat from tab ${tabId}`);
+        tabHeartbeats.set(tabId, Date.now());
+        
+        // Ensure the tab is in our connected tabs set
+        if (!connectedTabs.has(tabId)) {
+          console.log(`Re-adding tab ${tabId} to connected tabs based on heartbeat`);
+          connectedTabs.add(tabId);
+        }
+      }
+    }
+  });  
+
+  // Set up a periodic check for stale connections
+  setInterval(() => {
+    const now = Date.now();
+    const staleThreshold = now - (HEARTBEAT_CHECK_INTERVAL * 2); // Consider stale after missing 2 heartbeats
+    
+    // Check each tab with a recorded heartbeat
+    for (const [tabId, lastHeartbeat] of tabHeartbeats.entries()) {
+      if (lastHeartbeat < staleThreshold) {
+        console.log(`Tab ${tabId} heartbeat is stale, removing from connected tabs`);
+        connectedTabs.delete(tabId);
+        tabHeartbeats.delete(tabId);
+      }
+    }
+  }, HEARTBEAT_CHECK_INTERVAL);
 
   /**
    * Listens for when the extension becomes active
