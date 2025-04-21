@@ -79,3 +79,15 @@
   max-width: none !important;
   width: 100% !important;
 }
+
+/* Modal styles - Allow modals to use full width */
+@media (width <= 960px) {
+  .artdeco-modal {
+    max-height: 100dvh !important;
+  }
+
+  .feed-shared-update-detail-viewer__content {
+    display: grid !important;
+    grid-template-rows: 50% 50% !important;
+  }
+}
