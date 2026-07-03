@@ -21,6 +21,10 @@
   padding-right: 2rem !important;
 }
 
+#root header>div>div>div {
+  padding-inline-start: 1.75rem !important;
+}
+
 /* Layout container styles - Remove width constraints and add consistent padding */
 .scaffold-layout-container {
   max-width: unset !important;
@@ -93,10 +97,18 @@
 }
 
 /* New homepage/workspace */
-
 main#workspace>div {
   width: auto !important;
   max-width: unset !important;
   padding-left: 2rem !important;
   padding-right: 2rem !important;
+}
+
+#root div.hasLegacyFeedLineHeight.legacyNotifLineHeight div[role="toolbar"] {
+  padding-left: 1.5rem !important;
+  padding-right: 1.5rem !important;
+}
+
+#root div.hasLegacyFeedLineHeight.legacyNotifLineHeight div[role="toolbar"] div {
+  width: auto !important;
 }
