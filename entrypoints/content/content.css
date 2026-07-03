@@ -16,7 +16,7 @@
   max-width: unset !important;
 }
 
-#root header > div {
+#root header>div {
   padding-left: 2rem !important;
   padding-right: 2rem !important;
 }
@@ -32,7 +32,7 @@
   padding-right: 2rem !important;
 }
 
-.scaffold-layout-container.scaffold-layout-container--reflow > div {
+.scaffold-layout-container.scaffold-layout-container--reflow>div {
   max-width: unset !important;
   width: 100% !important;
   margin-left: auto;
@@ -47,7 +47,7 @@
 
 /* Content containers - Allow post content to use more space */
 .feed-shared-update-v2__content,
-.scaffold-finite-scroll__content > div {
+.scaffold-finite-scroll__content>div {
   max-width: none !important;
 }
 
@@ -63,7 +63,7 @@
 }
 
 /* Network growth page - Expand and add consistent padding */
-#root > div > div > main > div {
+#root>div>div>main>div {
   max-width: none !important;
   padding-left: 2rem !important;
   padding-right: 2rem !important;
@@ -81,7 +81,7 @@
 }
 
 /* Modal styles - Allow modals to use full width */
-@media (width <= 960px) {
+@media (width <=960px) {
   .artdeco-modal {
     max-height: 100dvh !important;
   }
@@ -90,4 +90,13 @@
     display: grid !important;
     grid-template-rows: 50% 50% !important;
   }
+}
+
+/* New homepage/workspace */
+
+main#workspace>div {
+  width: auto !important;
+  max-width: unset !important;
+  padding-left: 2rem !important;
+  padding-right: 2rem !important;
 }
