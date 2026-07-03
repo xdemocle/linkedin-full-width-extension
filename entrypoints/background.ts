@@ -32,7 +32,7 @@ export default defineBackground(() => {
     console.log(`Injecting content script into tab ${tabId}`);
     try {
       await browser.scripting.executeScript({
-        target: { tabId },
+        target: { tabId, allFrames: true },
         files: ['content-scripts/content.js'],
       });
       console.log(`Successfully injected content script into tab ${tabId}`);
@@ -254,7 +254,7 @@ export default defineBackground(() => {
             try {
               // Inject the content script
               await browser.scripting.executeScript({
-                target: { tabId: tab.id },
+                target: { tabId: tab.id, allFrames: true },
                 files: ['content-scripts/content.js'],
               });
 
@@ -328,7 +328,7 @@ export default defineBackground(() => {
           try {
             // Inject the content script
             await browser.scripting.executeScript({
-              target: { tabId: tab.id },
+              target: { tabId: tab.id, allFrames: true },
               files: ['content-scripts/content.js'],
             });
 

@@ -13,6 +13,8 @@ import linkedinFullWidthStyles from './content.css?inline';
 
 export default defineContentScript({
   matches: [targetWebsitePattern],
+  allFrames: true,
+  runAt: 'document_start',
   main() {
     /**
      * Applies necessary CSS classes to new LinkedIn modules
@@ -45,31 +47,37 @@ export default defineContentScript({
 
       const styleId = 'linkedin-full-width-style';
 
-      // Always remove any existing style element first to avoid style conflicts
-      const existingStyle = document.querySelector(`#${styleId}`);
+      const applyStylesToDoc = (doc: Document) => {
+        const existingStyle = doc.querySelector(`#${styleId}`);
+        if (existingStyle) {
+          existingStyle.remove();
+        }
 
-      if (existingStyle) {
-        document.head.removeChild(existingStyle);
-      }
+        if (state === State.XL) {
+          const style = doc.createElement('style');
+          style.id = styleId;
+          console.debug('Applying full-width styles (XL state)');
+          style.textContent = linkedinFullWidthStyles.toString();
+          (doc.head || doc.documentElement).appendChild(style);
+        } else {
+          console.debug('Applying default LinkedIn layout (M state)');
+        }
+      };
 
-      // For XL state (full width), create and inject a new style element
-      // For M state (default), just removing the style element is sufficient
-      if (state === State.XL) {
-        // Create a new style element for full-width mode
-        const style = document.createElement('style');
-        style.id = styleId;
-        console.debug('Applying full-width styles (XL state)');
+      // Apply to main document
+      applyStylesToDoc(document);
 
-        // Use the imported CSS from the external file
-        style.textContent = linkedinFullWidthStyles.toString();
-
-        // Add the style element to the document head
-        document.head.appendChild(style);
-      } else {
-        // For M state, we've already removed the custom styles
-        // This allows LinkedIn's default styles to take effect
-        console.debug('Applying default LinkedIn layout (M state)');
-        // No need to add any styles - LinkedIn defaults will apply
+      // Apply to all same-origin child iframes
+      if (window.self === window.top) {
+        document.querySelectorAll('iframe').forEach((iframe) => {
+          try {
+            if (iframe.contentDocument) {
+              applyStylesToDoc(iframe.contentDocument);
+            }
+          } catch (e) {
+            // Ignore cross-origin errors
+          }
+        });
       }
       
       // Notify the injected script about the style change
@@ -78,6 +86,86 @@ export default defineContentScript({
         action: 'toggleStyles',
         state: state
       }, '*');
+    };
+
+    /**
+     * Watches for LinkedIn dynamically inserting full-screen iframes
+     * during SPA navigation and injects our styles into them.
+     *
+     * LinkedIn sometimes replaces the main content div with a full-screen
+     * iframe pointing to another linkedin.com page. Since content scripts
+     * with allFrames: true will run inside same-origin iframes automatically,
+     * this observer handles the edge case of iframes injected after page load.
+     */
+    const observeIframes = (): void => {
+      const styleId = 'linkedin-full-width-style';
+
+      const injectStylesIntoIframe = (iframe: HTMLIFrameElement): void => {
+        try {
+          const iframeDoc = iframe.contentDocument;
+          if (!iframeDoc) return;
+
+          // Only inject if the parent has full-width style active (XL state)
+          const isXlActive = !!document.querySelector(`#${styleId}`);
+
+          const existing = iframeDoc.querySelector(`#${styleId}`);
+          if (existing) {
+            existing.remove();
+          }
+
+          if (isXlActive) {
+            const style = iframeDoc.createElement('style');
+            style.id = styleId;
+            style.textContent = linkedinFullWidthStyles.toString();
+            (iframeDoc.head || iframeDoc.documentElement).appendChild(style);
+            console.debug('Injected full-width styles into LinkedIn iframe');
+          }
+        } catch {
+          // Cross-origin iframe — we can't access it, and that's fine
+        }
+      };
+
+      const observer = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+          for (const node of mutation.addedNodes) {
+            if (!(node instanceof HTMLElement)) continue;
+
+            // Check the added node itself
+            if (node.tagName === 'IFRAME') {
+              const iframe = node as HTMLIFrameElement;
+              if (iframe.src?.includes('linkedin.com') || !iframe.src) {
+                iframe.addEventListener('load', () => injectStylesIntoIframe(iframe), { once: true });
+              }
+            }
+
+            // Check descendants for iframes
+            const iframes = node.querySelectorAll?.('iframe');
+            iframes?.forEach((iframe) => {
+              const el = iframe as HTMLIFrameElement;
+              if (el.src?.includes('linkedin.com') || !el.src) {
+                el.addEventListener('load', () => injectStylesIntoIframe(el), { once: true });
+              }
+            });
+          }
+        }
+      });
+
+      observer.observe(document.documentElement, {
+        childList: true,
+        subtree: true,
+      });
+
+      // Also handle any iframes already present at script startup
+      document.querySelectorAll('iframe').forEach((iframe) => {
+        const el = iframe as HTMLIFrameElement;
+        if (el.src?.includes('linkedin.com') || !el.src) {
+          if (el.contentDocument?.readyState === 'complete') {
+            injectStylesIntoIframe(el);
+          } else {
+            el.addEventListener('load', () => injectStylesIntoIframe(el), { once: true });
+          }
+        }
+      });
     };
 
     /**
@@ -100,6 +188,11 @@ export default defineContentScript({
       // Apply special classes if we're on a regular LinkedIn page
       if (isRegularPage) {
         applyClassNamesToNewModules();
+      }
+
+      // Observe dynamically added same-origin iframes
+      if (window.self === window.top) {
+        observeIframes();
       }
 
       // Retrieve and apply the current extension state
