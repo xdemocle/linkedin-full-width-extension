@@ -1,3 +1,9 @@
+allowBuilds:
+  dtrace-provider: true
+  esbuild: true
+  sharp: true
+  spawn-sync: true
+  unrs-resolver: true
 onlyBuiltDependencies:
   - dtrace-provider
   - esbuild
