@@ -104,6 +104,11 @@ main#workspace>div {
   padding-right: 2rem !important;
 }
 
+main#workspace>div>div {
+  width: 100% !important;
+  max-width: unset !important;
+}
+
 #root div.hasLegacyFeedLineHeight.legacyNotifLineHeight div[role="toolbar"] {
   padding-left: 1.5rem !important;
   padding-right: 1.5rem !important;
